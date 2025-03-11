@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -33,24 +34,31 @@ export default function ReportarPerdida() {
         formData.append('file', file);
         
         try {
+          // Asegurarse de que la URL sea correcta
           const response = await fetch('/api/upload', {
             method: 'POST',
             body: formData,
           });
           
           if (!response.ok) {
-            throw new Error('Error al subir imagen');
+            throw new Error(`Error al subir imagen: ${response.statusText}`);
           }
           
           const data = await response.json();
-          uploadedUrls.push(data.url);
+          if (data.url) {
+            uploadedUrls.push(data.url);
+          } else {
+            console.error('No se recibió URL de la imagen:', data);
+          }
         } catch (error) {
           console.error('Error al subir imagen:', error);
         }
       }
       
       // Actualizar el estado con las URLs de las imágenes subidas
-      setImages([...images, ...uploadedUrls]);
+      if (uploadedUrls.length > 0) {
+        setImages([...images, ...uploadedUrls]);
+      }
       setIsUploading(false);
     }
   };
@@ -64,14 +72,20 @@ export default function ReportarPerdida() {
     const formValues = Object.fromEntries(formData.entries());
     
     // Añadir las URLs de las imágenes
-    const reportData = {
+    const dataToSend = {
       ...formValues,
       imageUrls: images
     };
   
     try {
-      // Aquí enviarías los datos a tu API/base de datos
-      // Por ejemplo: await fetch('/api/reportes', { method: 'POST', body: JSON.stringify(reportData) })
+      // Enviar los datos a la API (comentado por ahora)
+      // await fetch('/api/reportes', { 
+      //   method: 'POST', 
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify(dataToSend) 
+      // });
       
       // Simular envío de datos
       await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -163,10 +177,12 @@ export default function ReportarPerdida() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
                 {images.map((img, index) => (
                   <div key={index} className="relative aspect-square rounded-md overflow-hidden bg-muted">
-                    <img
+                    <Image
                       src={img || "/placeholder.svg"}
                       alt={`Imagen ${index + 1}`}
-                      className="object-cover w-full h-full"
+                      className="object-cover"
+                      fill
+                      sizes="(max-width: 768px) 50vw, 33vw"
                     />
                   </div>
                 ))}
@@ -213,4 +229,3 @@ export default function ReportarPerdida() {
     </div>
   )
 }
-

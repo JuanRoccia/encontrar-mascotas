@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -97,10 +98,13 @@ export default function MapaPage() {
                   <>
                     {/* Mapa simulado */}
                     <div className="absolute inset-0 bg-gray-200">
-                      <img
+                      <Image
                         src="/placeholder.svg?height=500&width=800&text=Mapa de Bahía Blanca"
                         alt="Mapa"
-                        className="w-full h-full object-cover"
+                        className="object-cover"
+                        fill
+                        sizes="100vw"
+                        priority
                       />
 
                       {/* Marcadores de mascotas perdidas */}
@@ -180,4 +184,3 @@ export default function MapaPage() {
     </div>
   )
 }
-

@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -74,7 +75,7 @@ const mascotasEncontradas = [
 ]
 
 export default function BuscarMascotas() {
-  const [activeTab, setActiveTab] = useState("perdidas")
+  const [, setActiveTab] = useState("perdidas")
   const [filteredPerdidas, setFilteredPerdidas] = useState(mascotasPerdidas)
   const [filteredEncontradas, setFilteredEncontradas] = useState(mascotasEncontradas)
 
@@ -144,10 +145,12 @@ export default function BuscarMascotas() {
                     {filteredPerdidas.map((mascota) => (
                       <Card key={mascota.id} className="overflow-hidden">
                         <div className="aspect-square relative">
-                          <img
+                          <Image
                             src={mascota.imagen || "/placeholder.svg"}
                             alt={mascota.nombre || "Mascota perdida"}
-                            className="object-cover w-full h-full"
+                            className="object-cover"
+                            fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           />
                           <Badge className="absolute top-2 right-2">{mascota.tipo}</Badge>
                         </div>
@@ -194,10 +197,12 @@ export default function BuscarMascotas() {
                     {filteredEncontradas.map((mascota) => (
                       <Card key={mascota.id} className="overflow-hidden">
                         <div className="aspect-square relative">
-                          <img
+                          <Image
                             src={mascota.imagen || "/placeholder.svg"}
                             alt={"Mascota encontrada"}
-                            className="object-cover w-full h-full"
+                            className="object-cover"
+                            fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           />
                           <Badge className="absolute top-2 right-2">{mascota.tipo}</Badge>
                         </div>
@@ -244,4 +249,3 @@ export default function BuscarMascotas() {
     </div>
   )
 }
-

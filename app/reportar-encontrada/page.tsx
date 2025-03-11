@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -16,19 +17,50 @@ export default function ReportarEncontrada() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [images, setImages] = useState<string[]>([])
+  const [isUploading, setIsUploading] = useState(false);
 
-  // Simular carga de imágenes
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Función para carga de imágenes
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      // En una implementación real, aquí subiríamos las imágenes a un servidor
-      // y obtendríamos URLs. Para este ejemplo, usamos URLs de placeholder
-      const newImages = Array.from(
-        { length: e.target.files.length },
-        (_, i) => `/placeholder.svg?height=200&width=200&text=Imagen ${images.length + i + 1}`,
-      )
-      setImages([...images, ...newImages])
+      // Mostrar estado de carga
+      setIsUploading(true);
+      
+      const uploadedUrls = [];
+      
+      // Procesar cada archivo
+      for (let i = 0; i < e.target.files.length; i++) {
+        const file = e.target.files[i];
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Error al subir imagen: ${response.statusText}`);
+          }
+          
+          const data = await response.json();
+          if (data.url) {
+            uploadedUrls.push(data.url);
+          } else {
+            console.error('No se recibió URL de la imagen:', data);
+          }
+        } catch (error) {
+          console.error('Error al subir imagen:', error);
+        }
+      }
+      
+      // Actualizar el estado con las URLs de las imágenes subidas
+      if (uploadedUrls.length > 0) {
+        setImages([...images, ...uploadedUrls]);
+      }
+      setIsUploading(false);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -133,10 +165,12 @@ export default function ReportarEncontrada() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
                 {images.map((img, index) => (
                   <div key={index} className="relative aspect-square rounded-md overflow-hidden bg-muted">
-                    <img
+                    <Image
                       src={img || "/placeholder.svg"}
                       alt={`Imagen ${index + 1}`}
-                      className="object-cover w-full h-full"
+                      className="object-cover"
+                      fill
+                      sizes="(max-width: 768px) 50vw, 33vw"
                     />
                   </div>
                 ))}
@@ -157,11 +191,16 @@ export default function ReportarEncontrada() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button type="submit" className="w-full" disabled={isSubmitting || isUploading}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Enviando reporte...
+                </>
+              ) : isUploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Subiendo imágenes...
                 </>
               ) : (
                 "Enviar Reporte"
@@ -173,4 +212,3 @@ export default function ReportarEncontrada() {
     </div>
   )
 }
-
