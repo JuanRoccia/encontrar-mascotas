@@ -16,30 +16,73 @@ export default function ReportarPerdida() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [images, setImages] = useState<string[]>([])
+  const [isUploading, setIsUploading] = useState(false);
 
-  // Simular carga de imágenes
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Función para carga de imágenes
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      // En una implementación real, aquí subiríamos las imágenes a un servidor
-      // y obtendríamos URLs. Para este ejemplo, usamos URLs de placeholder
-      const newImages = Array.from(
-        { length: e.target.files.length },
-        (_, i) => `/placeholder.svg?height=200&width=200&text=Imagen ${images.length + i + 1}`,
-      )
-      setImages([...images, ...newImages])
+      // Mostrar estado de carga
+      setIsUploading(true);
+      
+      const uploadedUrls = [];
+      
+      // Procesar cada archivo
+      for (let i = 0; i < e.target.files.length; i++) {
+        const file = e.target.files[i];
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          
+          if (!response.ok) {
+            throw new Error('Error al subir imagen');
+          }
+          
+          const data = await response.json();
+          uploadedUrls.push(data.url);
+        } catch (error) {
+          console.error('Error al subir imagen:', error);
+        }
+      }
+      
+      // Actualizar el estado con las URLs de las imágenes subidas
+      setImages([...images, ...uploadedUrls]);
+      setIsUploading(false);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-
-    // Simular envío de datos
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-
-    // Redireccionar a una página de confirmación
-    router.push("/reporte-exitoso?tipo=perdida")
-  }
+    e.preventDefault();
+    setIsSubmitting(true);
+  
+    // Obtener todos los datos del formulario
+    const formData = new FormData(e.target as HTMLFormElement);
+    const formValues = Object.fromEntries(formData.entries());
+    
+    // Añadir las URLs de las imágenes
+    const reportData = {
+      ...formValues,
+      imageUrls: images
+    };
+  
+    try {
+      // Aquí enviarías los datos a tu API/base de datos
+      // Por ejemplo: await fetch('/api/reportes', { method: 'POST', body: JSON.stringify(reportData) })
+      
+      // Simular envío de datos
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      
+      // Redireccionar a una página de confirmación
+      router.push("/reporte-exitoso?tipo=perdida");
+    } catch (error) {
+      console.error('Error al enviar reporte:', error);
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -134,10 +177,20 @@ export default function ReportarPerdida() {
                     multiple
                     className="absolute inset-0 opacity-0 cursor-pointer z-10"
                     onChange={handleImageUpload}
+                    disabled={isUploading}
                   />
                   <div className="flex flex-col items-center justify-center text-muted-foreground">
-                    <Upload className="h-8 w-8 mb-2" />
-                    <span className="text-sm">Subir fotos</span>
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="h-8 w-8 mb-2 animate-spin" />
+                        <span className="text-sm">Subiendo...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-8 w-8 mb-2" />
+                        <span className="text-sm">Subir fotos</span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
